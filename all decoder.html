@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UNIVERSAL DECODER | Cyb3rKaran Elite</title>
+    <!-- JSZip for Folder Support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root { 
+            --neon: #bc13fe; /* Purple Elite */
+            --gold: #ffd700; 
+            --hacker: #00ff41; 
+            --bg: #010409; 
+            --line-glow: 0 0 20px var(--neon);
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body, html {
+            margin: 0; padding: 0; 
+            height: 100dvh; width: 100vw;
+            background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif;
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.15; }
+
+        /* --- 1. TOP HEADER (LOGO + NAME + DYNAMIC BG) --- */
+        .header-top {
+            width: 100%; padding: 15px 0; text-align: center;
+            background: linear-gradient(180deg, rgba(188, 19, 254, 0.2) 0%, rgba(0,0,0,0.95) 100%);
+            border-bottom: 2.5px solid var(--neon);
+            box-shadow: var(--line-glow); z-index: 100;
+        }
+        .header-top img {
+            width: 70px; height: 70px; border-radius: 50%;
+            border: 2px solid var(--neon); box-shadow: 0 0 20px var(--neon);
+            display: block; margin: 0 auto 8px auto; object-fit: cover;
+        }
+        .cyber-name {
+            font-size: 1.5rem; font-weight: 900; letter-spacing: 5px;
+            background: linear-gradient(90deg, #fff, var(--neon));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px var(--neon); text-transform: uppercase;
+        }
+
+        /* --- 2. MAIN WORKSPACE (FULL PANEL) --- */
+        .workspace {
+            flex: 1; width: 100%;
+            border-left: 3px solid var(--neon); 
+            border-right: 3px solid var(--neon);
+            background: rgba(10, 5, 20, 0.98);
+            overflow-y: auto; padding: 15px;
+            display: flex; flex-direction: column;
+        }
+
+        /* Logic Info Bar */
+        .info-bar {
+            background: #000; border: 1px solid var(--neon);
+            padding: 10px; border-radius: 8px; font-family: monospace;
+            font-size: 10px; color: var(--hacker); margin-bottom: 15px;
+            box-shadow: inset 0 0 10px #000;
+        }
+
+        .upload-area {
+            border: 1.5px dashed var(--neon); padding: 25px; border-radius: 15px;
+            text-align: center; cursor: pointer; color: var(--neon); font-size: 12px;
+            background: rgba(188, 19, 254, 0.05); margin-bottom: 15px;
+        }
+
+        .inbox-ui {
+            background: #000; border: 1px solid #2d1e3b; border-radius: 15px; padding: 12px;
+            box-shadow: inset 0 0 15px #000; margin-bottom: 15px;
+        }
+        textarea {
+            width: 100%; height: 200px; background: transparent; border: none;
+            color: var(--hacker); font-family: 'Consolas', monospace; font-size: 11px;
+            resize: none; outline: none;
+        }
+
+        .btn-core {
+            width: 100%; padding: 18px; border: none; border-radius: 12px;
+            font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase;
+            transition: 0.3s; margin-bottom: 10px;
+        }
+        .btn-decode { background: linear-gradient(90deg, var(--neon), #6a11cb); color: #fff; box-shadow: 0 5px 15px rgba(188, 19, 254, 0.4); }
+        .btn-dl { background: var(--gold); color: #000; display: none; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4); }
+
+        /* --- 3. FIXED BOTTOM BRANDING --- */
+        .footer-bottom {
+            width: 100%; padding: 18px 0; text-align: center;
+            background: #000; border-top: 3px solid var(--neon);
+            box-shadow: 0 -8px 25px rgba(188, 19, 254, 0.5);
+            z-index: 100;
+        }
+        .karan-tag {
+            font-size: 1.4rem; font-weight: 900;
+            background: linear-gradient(90deg, var(--neon), var(--gold));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 12px rgba(188, 19, 254, 0.6);
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<!-- TOP LOGO & BRANDING -->
+<div class="header-top">
+    <a href="#">
+        <img src="https://i.ibb.co/HDm9yVLh/d1a7b2179c48f9dadb9c4ea3e8edcfbb.jpg" alt="Logo">
+    </a>
+    <div class="cyber-name">Cyb3rKaran Universal</div>
+</div>
+
+<!-- MAIN WORKSPACE -->
+<div class="workspace">
+    
+    <div class="info-bar" id="statusBox">
+        [ SYSTEM ] READY: SCANNING FOR ALL ENCRYPTION PATTERNS...
+    </div>
+
+    <!-- Folder Pick -->
+    <div class="upload-area" onclick="document.getElementById('folderIn').click()">
+        <span id="fileLabel">📁 INJECT ENCRYPTED FOLDER / FILE</span>
+        <input type="file" id="folderIn" webkitdirectory directory multiple style="display:none" onchange="handleFiles(this)">
+    </div>
+
+    <!-- Inbox -->
+    <span style="font-size: 11px; color: var(--neon); font-weight: bold; margin-bottom: 8px; display: block;">🔓 UNIVERSAL DECODED PREVIEW:</span>
+    <div class="inbox-ui">
+        <textarea id="inboxView" readonly placeholder="Universal scanning ke baad original code yahan dikhega..."></textarea>
+    </div>
+
+    <!-- Actions -->
+    <button class="btn-core btn-decode" onclick="universalDecode()">⚡ BREAK ANY ENCRYPTION</button>
+    <button id="dlBtn" class="btn-core btn-dl" onclick="downloadZip()">💾 SAVE RECOVERED PROJECT</button>
+
+</div>
+
+<!-- BOTTOM BRANDING -->
+<div class="footer-bottom">
+    <div class="karan-tag">MODE BY Cyb3rKaran</div>
+</div>
+
+<script>
+    // --- Background Animation ---
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const drops = Array(Math.floor(canvas.width/20)).fill(1);
+    function draw() {
+        ctx.fillStyle = "rgba(1, 4, 9, 0.1)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "#bc13fe"; ctx.font = "15px monospace";
+        drops.forEach((y, i) => {
+            ctx.fillText(Math.random() > 0.5 ? "1" : "0", i*20, y*20);
+            if(y*20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+
+    // --- Master Logic Hub ---
+    let files = [];
+    let zip = new JSZip();
+
+    function handleFiles(input) {
+        files = Array.from(input.files);
+        document.getElementById('fileLabel').innerText = files.length + " Files Injected";
+    }
+
+    async function universalDecode() {
+        if(files.length === 0) return alert("Pehle data inject karein!");
+        zip = new JSZip();
+        let firstFilePreview = "";
+        
+        document.getElementById('statusBox').innerText = "[ ANALYZING ] DEEP SCANNING LAYERS...";
+
+        for(let file of files) {
+            let content = await file.text();
+            let decoded = await startDeepClean(content);
+            
+            zip.file(file.webkitRelativePath || file.name, decoded);
+            if(!firstFilePreview) firstFilePreview = decoded;
+        }
+
+        document.getElementById('inboxView').value = firstFilePreview;
+        document.getElementById('dlBtn').style.display = "block";
+        document.getElementById('statusBox').innerText = "[ SUCCESS ] ALL KNOWN LAYERS BYPASSED.";
+        alert("Bhai, Universal Decoding Ho Gayi!");
+    }
+
+    // --- The Master Algorithm ---
+    async function startDeepClean(data) {
+        let clean = data;
+        let lastLength = 0;
+
+        // Recursive Decoding Loop (Jab tak code decode hota rahe)
+        for(let i=0; i<5; i++) {
+            lastLength = clean.length;
+            
+            // 1. Detect & Clean Base64 (HTML/PHP/Python)
+            clean = clean.replace(/([A-Za-z0-9+/]{40,}=*)/g, (match) => {
+                try { return atob(match); } catch(e) { return match; }
+            });
+
+            // 2. Detect & Clean URL Encoding
+            if(clean.includes('%')) {
+                try { clean = decodeURIComponent(clean); } catch(e) {}
+            }
+
+            // 3. Detect & Clean Hex Strings
+            clean = clean.replace(/\\x([0-9a-fA-F]{2})/g, (m, g) => String.fromCharCode(parseInt(g, 16)));
+
+            // 4. Special: Cyb3rKaran AES-256 Lock Auto-Bypass
+            if(clean.includes('crypto.subtle.importKey') && clean.includes('AES-GCM')) {
+                const kMatch = clean.match(/const k="([^"]+)"/);
+                if(kMatch) {
+                    try { clean = await bypassAES(clean, kMatch[1]); } catch(e) {}
+                }
+            }
+
+            // 5. Detect eval(atob(...)) or eval(base64_decode(...))
+            const evalMatch = clean.match(/eval\((atob|base64_decode)\(['"]([^'"]+)['"]\)\)/i);
+            if(evalMatch) {
+                try { clean = atob(evalMatch[2]); } catch(e) {}
+            }
+
+            if(clean.length === lastLength) break; // Agar kuch change nahi hua toh stop
+        }
+        return clean;
+    }
+
+    // Specific logic for Karan's V20 Hub
+    async function bypassAES(html, pKey) {
+        const ivMatch = html.match(/iv=new Uint8Array\(\[([^\]]+)\]\)/);
+        const sMatch = html.match(/s=new Uint8Array\(\[([^\]]+)\]\)/);
+        const dMatch = html.match(/d="([^"]+)"/);
+        const iv = new Uint8Array(ivMatch[1].split(',').map(Number));
+        const s = new Uint8Array(sMatch[1].split(',').map(Number));
+        const d = dMatch[1];
+        const b = Uint8Array.from(atob(d), c => c.charCodeAt(0));
+        const enc = new TextEncoder();
+        const km = await crypto.subtle.importKey("raw", enc.encode(pKey), "PBKDF2", false, ["deriveKey"]);
+        const ky = await crypto.subtle.deriveKey({name:"PBKDF2", salt:s, iterations:1000, hash:"SHA-256"}, km, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+        const dec = await crypto.subtle.decrypt({name:"AES-GCM", iv}, ky, b);
+        return new TextDecoder().decode(dec);
+    }
+
+    function downloadZip() {
+        zip.generateAsync({type:"blob"}).then(c => {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(c);
+            a.download = "RECOVERED_BY_CYB3RKARAN.zip";
+            a.click();
+        });
+    }
+</script>
+</body>
+</html>
